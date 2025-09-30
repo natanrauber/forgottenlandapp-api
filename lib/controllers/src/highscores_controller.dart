@@ -40,7 +40,7 @@ class HighscoresController {
 
   Future<Record?> _getFromTibiaData(String? world, String? category, int page) async {
     MyHttpResponse response = await httpClient.get(
-      '${env['PATH_TIBIA_DATA_SELFHOSTED']}/highscores/$world/$category/none/$page',
+      '${env[EnvVar.pathTibiaDataApiSelfHosted]}/highscores/$world/$category/none/$page',
     );
     if (!response.success) return null;
     if (response.dataAsMap['highscores'] is! Map<String, dynamic>) return null;

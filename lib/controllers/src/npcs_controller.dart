@@ -8,16 +8,15 @@ abstract class INPCsController {
 }
 
 class NPCsController implements INPCsController {
-  NPCsController(this.httpClient);
+  NPCsController(this.env, this.httpClient);
 
+  final Env env;
   final IHttpClient httpClient;
 
   @override
   Future<Response> getAll(Request request) async {
     try {
-      MyHttpResponse response = await httpClient.get(
-        'https://api.github.com/repos/s2ward/tibia/git/trees/main?recursive=1',
-      );
+      MyHttpResponse response = await httpClient.get('${env[EnvVar.pathTibiaArchiveApi]}?recursive=1');
 
       List<dynamic> filteredList = <dynamic>[];
       if (response.dataAsMap['tree'] is List<dynamic>) {
@@ -42,9 +41,8 @@ class NPCsController implements INPCsController {
   Future<Response> getTranscripts(Request request, String name) async {
     try {
       MyHttpResponse response = await httpClient.get(
-        'https://raw.githubusercontent.com/s2ward/tibia/main/data/npcs/text/Rookgaard/$name.txt',
+        '${env[EnvVar.pathTibiaArchive]}/data/npcs/text/Rookgaard/$name.txt',
       );
-
       return ApiResponse.success(data: response.data);
     } catch (e) {
       return ApiResponse.error(e);

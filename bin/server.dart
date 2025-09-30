@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:dotenv/dotenv.dart';
 import 'package:forgottenlandapp_adapters/adapters.dart';
 import 'package:forgottenlandapp_api/controllers/controllers.dart';
 import 'package:forgottenlandapp_utils/utils.dart';
@@ -8,15 +9,22 @@ import 'package:shelf/shelf_io.dart';
 import 'package:shelf_cors_headers/shelf_cors_headers.dart';
 import 'package:shelf_router/shelf_router.dart';
 
-final List<String> _requiredVar = <String>['PATH_TIBIA_DATA', 'PATH_TIBIA_DATA_SELFHOSTED'];
-final Env _env = Env();
-final IDatabaseClient _databaseClient = MySupabaseClient(databaseKey: _env['DATABASE_KEY'] ?? defaultDatabasePKey);
+final List<EnvVar> _required = <EnvVar>[
+  EnvVar.databaseKey,
+  EnvVar.databaseUrl,
+  EnvVar.pathTibiaArchive,
+  EnvVar.pathTibiaArchiveApi,
+  EnvVar.pathTibiaDataApi,
+  EnvVar.pathTibiaDataApiSelfHosted,
+];
+late final Env _env;
+late final IDatabaseClient _databaseClient;
 final IHttpClient _httpClient = MyDioClient();
 
 final IBazaarController _bazaarCtrl = BazaarController(_databaseClient);
-final IBooksController _booksCtrl = BooksController(_httpClient);
+final IBooksController _booksCtrl = BooksController(_env, _httpClient);
 final ILiveStreamsController _liveStreamsCtrl = LiveStreamsController(_databaseClient, _httpClient);
-final INPCsController _npcsCtrl = NPCsController(_httpClient);
+final INPCsController _npcsCtrl = NPCsController(_env, _httpClient);
 final IOnlineController _onlineCtrl = OnlineController(_databaseClient);
 final SettingsController _settingsCtrl = SettingsController(_databaseClient);
 final UserController _userCtrl = UserController(_env, _databaseClient, _httpClient);
@@ -45,9 +53,21 @@ final Router _router = Router()
   ..post('/user/signup', _userCtrl.signup)
   ..post('/user/verify', _userCtrl.verify);
 
+Future<void> _loadEnv() async {
+  Map<String, String> localMap = <String, String>{}..addAll(Platform.environment);
+  final DotEnv dotEnv = DotEnv();
+  dotEnv.load();
+  // ignore: invalid_use_of_visible_for_testing_member
+  localMap.addAll(dotEnv.map);
+  _env = Env(env: localMap, required: _required);
+}
+
 void main(List<String> args) async {
-  // _env.log();
-  if (_env.isMissingAny(_requiredVar)) return print('Missing required environment variable');
+  await _loadEnv();
+  _databaseClient = MySupabaseClient(
+    databaseUrl: _env[EnvVar.databaseUrl]!,
+    databaseKey: _env[EnvVar.databaseKey]!,
+  );
 
   // Use any available host or container IP (usually `0.0.0.0`).
   final InternetAddress ip = InternetAddress.anyIPv4;

@@ -12,7 +12,7 @@ typedef OE = OnlineEntry;
 
 class CharacterController {
   CharacterController(this.env, this.databaseClient, this.httpClient, this.highscoresCtrl) {
-    pathTibiaData = env['PATH_TIBIA_DATA'];
+    pathTibiaData = env[EnvVar.pathTibiaDataApi];
   }
 
   final Env env;

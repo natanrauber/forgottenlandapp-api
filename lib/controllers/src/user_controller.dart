@@ -56,7 +56,7 @@ class UserController {
       dynamic requestData = jsonDecode(await request.readAsString());
       dynamic name = requestData['name'];
 
-      MyHttpResponse r = await httpClient.get('${env['PATH_TIBIA_DATA']}/character/$name');
+      MyHttpResponse r = await httpClient.get('${env[EnvVar.pathTibiaDataApi]}/character/$name');
       if (!r.success) return ApiResponse.notFound();
 
       print(JsonEncoder.withIndent(' ').convert(r.dataAsMap));

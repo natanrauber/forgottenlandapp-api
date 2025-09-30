@@ -1,4 +1,3 @@
-# Use latest stable channel SDK.
 FROM dart:3.6.0 AS build
 
 # Create working directory
@@ -11,12 +10,23 @@ COPY . .
 RUN dart pub get
 
 # Load env variables
-ARG PATH_TIBIA_DATA
-ARG PATH_TIBIA_DATA_SELFHOSTED
-ARG DATABASE_KEY
+ARG databaseKey
+ARG databaseUrl
+ARG pathTibiaArchive
+ARG pathTibiaArchiveApi
+ARG pathTibiaDataApi
+ARG pathTibiaDataApiSelfHosted
 
-# compile API
-RUN dart compile exe --define=PATH_TIBIA_DATA=${PATH_TIBIA_DATA} --define=PATH_TIBIA_DATA_SELFHOSTED=${PATH_TIBIA_DATA_SELFHOSTED} --define=DATABASE_KEY=${DATABASE_KEY} bin/server.dart -o bin/server
+# Compile server
+RUN dart compile exe \
+    --define=databaseKey=${databaseKey} \
+    --define=databaseUrl=${databaseUrl} \
+    --define=pathTibiaArchive=${pathTibiaArchive} \
+    --define=pathTibiaArchiveApi=${pathTibiaArchiveApi} \
+    --define=pathTibiaDataApi=${pathTibiaDataApi} \
+    --define=pathTibiaDataApiSelfHosted=${pathTibiaDataApiSelfHosted} \
+    bin/server.dart \
+    -o bin/server
 
 # Build minimal serving image from AOT-compiled `/server`
 # and the pre-built AOT-runtime in the `/runtime/` directory of the base image.
@@ -24,6 +34,6 @@ FROM scratch
 COPY --from=build /runtime/ /
 COPY --from=build /tmp/bin/server /tmp/bin/
 
-# Start API.
+# Start server
 EXPOSE 8080
 CMD ["/tmp/bin/server"]
